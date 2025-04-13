@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Compressor - Maintain Quality up to 500MB</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PDF Compressor</h1>
+            <p>Compress PDF files without losing quality - supports files up to 500MB</p>
+        </header>
+
+        <main>
+            <section class="upload-section">
+                <div class="upload-container" id="drop-area">
+                    <div class="upload-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                    </div>
+                    <h3>Drag & Drop your PDF here</h3>
+                    <p>or</p>
+                    <label for="file-input" class="file-input-label">Choose File</label>
+                    <input type="file" id="file-input" accept=".pdf" hidden>
+                    <p class="file-limit">Maximum file size: 500MB</p>
+                    <p id="file-name" class="file-name"></p>
+                </div>
+            </section>
+
+            <section class="options-section">
+                <h2>Compression Options</h2>
+                <div class="option-group">
+                    <label for="quality-slider">Quality Level:</label>
+                    <input type="range" id="quality-slider" min="1" max="100" value="90" class="slider">
+                    <span id="quality-value">90%</span>
+                </div>
+                <div class="option-group">
+                    <label>Compression Mode:</label>
+                    <div class="radio-group">
+                        <input type="radio" id="mode-lossless" name="compression-mode" value="lossless" checked>
+                        <label for="mode-lossless">Lossless (Maintain Quality)</label>
+                    </div>
+                    <div class="radio-group">
+                        <input type="radio" id="mode-balanced" name="compression-mode" value="balanced">
+                        <label for="mode-balanced">Balanced (Good Quality)</label>
+                    </div>
+                    <div class="radio-group">
+                        <input type="radio" id="mode-maximum" name="compression-mode" value="maximum">
+                        <label for="mode-maximum">Maximum Compression</label>
+                    </div>
+                </div>
+                <button id="compress-btn" class="compress-btn" disabled>Compress PDF</button>
+            </section>
+
+            <section class="progress-section" id="progress-section" style="display: none;">
+                <h2>Compressing...</h2>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+                <p id="progress-text">0%</p>
+                <p id="compression-stats"></p>
+            </section>
+
+            <section class="result-section" id="result-section" style="display: none;">
+                <h2>Compression Complete!</h2>
+                <div class="result-stats">
+                    <div class="stat">
+                        <span class="stat-label">Original Size:</span>
+                        <span id="original-size" class="stat-value">0 MB</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Compressed Size:</span>
+                        <span id="compressed-size" class="stat-value">0 MB</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Reduction:</span>
+                        <span id="reduction-percentage" class="stat-value">0%</span>
+                    </div>
+                </div>
+                <button id="download-btn" class="download-btn">Download Compressed PDF</button>
+                <button id="compress-another-btn" class="secondary-btn">Compress Another PDF</button>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 PDF Compressor. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="chunked-file-handler.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
