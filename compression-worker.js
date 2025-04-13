@@ -13,16 +13,15 @@ self.addEventListener('message', async (e) => {
     self.postMessage({ type: 'progress', percentage: 10, message: 'Loading PDF...' });
     
     // Load the PDF document
-    const pdfDoc = await PDFLib.PDFDocument.load(pdfArrayBuffer);
+    const pdfDoc = await PDFLib.PDFDocument.load(pdfArrayBuffer, {
+      ignoreEncryption: false,
+      updateMetadata: !settings.removeMetadata
+    });
     
     self.postMessage({ type: 'progress', percentage: 30, message: 'Analyzing PDF structure...' });
     
     // Get document information
     const pageCount = pdfDoc.getPageCount();
-    const pages = pdfDoc.getPages();
-    
-    // Create a new PDF document for the compressed version
-    const compressedPdf = await PDFLib.PDFDocument.create();
     
     self.postMessage({ 
       type: 'progress', 
@@ -30,11 +29,23 @@ self.addEventListener('message', async (e) => {
       message: `Processing ${pageCount} pages...` 
     });
     
-    // Process each page
+    // Apply compression settings based on mode
+    if (settings.removeMetadata) {
+      // Remove metadata
+      pdfDoc.setTitle('');
+      pdfDoc.setAuthor('');
+      pdfDoc.setSubject('');
+      pdfDoc.setKeywords([]);
+      pdfDoc.setProducer('PDF Compressor');
+      pdfDoc.setCreator('PDF Compressor');
+    }
+    
+    // Process pages based on compression settings
     for (let i = 0; i < pageCount; i++) {
-      // Copy the page to the new document
-      const [copiedPage] = await compressedPdf.copyPages(pdfDoc, [i]);
-      compressedPdf.addPage(copiedPage);
+      const page = pdfDoc.getPage(i);
+      
+      // In a real implementation, we would compress images on each page
+      // based on the quality setting. For now, we're preserving the original content.
       
       // Update progress based on page processing
       const progress = 40 + Math.floor((i / pageCount) * 40);
@@ -45,51 +56,18 @@ self.addEventListener('message', async (e) => {
       });
     }
     
-    self.postMessage({ type: 'progress', percentage: 80, message: 'Applying compression settings...' });
+    self.postMessage({ type: 'progress', percentage: 80, message: 'Finalizing compressed PDF...' });
     
-    // Apply compression settings
-    if (settings.removeMetadata) {
-      // In a real implementation, we would remove metadata here
-      compressedPdf.setTitle('');
-      compressedPdf.setAuthor('');
-      compressedPdf.setSubject('');
-      compressedPdf.setKeywords([]);
-      compressedPdf.setProducer('PDF Compressor');
-      compressedPdf.setCreator('PDF Compressor');
-    }
+    // Save the PDF with appropriate compression options
+    const pdfBytes = await pdfDoc.save({
+      useObjectStreams: true,  // This helps with compression
+      addDefaultPage: false,
+      preserveExistingContent: true
+    });
     
-    // In a real implementation, we would apply image compression based on quality settings
-    // This would involve extracting images, compressing them, and replacing them
-    
-    self.postMessage({ type: 'progress', percentage: 90, message: 'Finalizing compressed PDF...' });
-    
-    // Save the compressed PDF
-    const compressedPdfBytes = await compressedPdf.save();
-    
-    // Simulate compression based on settings
-    // In a real implementation, this would be the result of actual compression techniques
-    let simulatedCompressionRatio;
-    if (settings.quality > 0.9) {
-      // Lossless mode - minimal compression
-      simulatedCompressionRatio = 0.9;
-    } else if (settings.quality > 0.7) {
-      // Balanced mode - moderate compression
-      simulatedCompressionRatio = 0.6;
-    } else {
-      // Maximum compression mode
-      simulatedCompressionRatio = 0.3;
-    }
-    
-    // Simulate a compressed file size based on the compression ratio
-    // In a real implementation, this would be the actual compressed size
-    const simulatedCompressedSize = Math.floor(pdfArrayBuffer.byteLength * simulatedCompressionRatio);
-    
-    // Create a new ArrayBuffer of the simulated size
-    const simulatedResult = new Uint8Array(simulatedCompressedSize);
-    // Copy the actual compressed PDF bytes into the simulated result
-    // (up to the length of the actual compressed PDF)
-    const bytesToCopy = Math.min(compressedPdfBytes.length, simulatedCompressedSize);
-    simulatedResult.set(compressedPdfBytes.slice(0, bytesToCopy));
+    // Calculate compression ratio
+    const compressionRatio = pdfBytes.length / pdfArrayBuffer.byteLength;
+    const compressedSize = pdfBytes.length;
     
     self.postMessage({ 
       type: 'progress', 
@@ -100,10 +78,10 @@ self.addEventListener('message', async (e) => {
     // Send the compressed PDF back to the main thread
     self.postMessage({ 
       type: 'complete', 
-      compressedPdf: simulatedResult.buffer,
+      compressedPdf: pdfBytes.buffer,
       originalSize: pdfArrayBuffer.byteLength,
-      compressedSize: simulatedCompressedSize
-    }, [simulatedResult.buffer]);
+      compressedSize: compressedSize
+    }, [pdfBytes.buffer]);
     
   } catch (error) {
     self.postMessage({ type: 'error', message: error.message });
